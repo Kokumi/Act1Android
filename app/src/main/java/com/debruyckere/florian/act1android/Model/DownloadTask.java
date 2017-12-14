@@ -1,6 +1,9 @@
 package com.debruyckere.florian.act1android.Model;
 
 import android.os.AsyncTask;
+import android.util.Log;
+
+import com.debruyckere.florian.act1android.Controller.MainActivity;
 import com.oc.rss.fake.FakeNews;
 import com.oc.rss.fake.FakeNewsList;
 
@@ -28,16 +31,23 @@ public class DownloadTask extends AsyncTask<URL, Void, List<News>> {
     public DownloadResponse delegate =null;
 
     private URL mURL;
+    private MyAdapter mAdapter;
+
+    public DownloadTask(MyAdapter pAda){
+        this.mAdapter = pAda;
+    }
     @Override
     protected List<News> doInBackground(URL... urls) {
+        Log.i("ETAT","Thread en fonctionnement Background");
         List<News> lNews = new ArrayList<>();
         for(URL unUrl : urls){
-            try {
+            try {   //Recup des news
                 InputStream stream = unUrl.openConnection().getInputStream();
                 Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
                 lNews = Xmlparser(doc);
             }catch (Exception e){
-
+                Log.i("CONNECTION ERROR","Erreur de la connexion", e);
+                this.cancel(true);
             }
         }
 
@@ -46,12 +56,12 @@ public class DownloadTask extends AsyncTask<URL, Void, List<News>> {
 
     @Override
     protected void onPostExecute(List<News> pNews){
-
+        mAdapter.processFinish(pNews);
     }
     private List<News> Xmlparser(Document pDoc){
         List<News> lNews=new ArrayList<News>();
 
-        try {
+        try {           //traduction du XML en objet News
             XmlPullParser mParser = XmlPullParserFactory.newInstance().newPullParser();
 
             int event = mParser.getEventType();
@@ -85,7 +95,8 @@ public class DownloadTask extends AsyncTask<URL, Void, List<News>> {
 
             }
         }catch (XmlPullParserException e){
-
+            Log.i("XMLERROR","Erreur dans le parsing des XML", e);
+            this.cancel(true);
         }
 
         return lNews;

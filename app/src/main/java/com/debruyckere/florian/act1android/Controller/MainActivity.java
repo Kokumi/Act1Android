@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity{
 
     private List<FakeNews> mFakeNews= FakeNewsList.all;
     private RecyclerView mRecyclerView;
+    private MyAdapter mAdapter = new MyAdapter();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +26,12 @@ public class MainActivity extends AppCompatActivity{
 
         mRecyclerView=findViewById(R.id.ListViews);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mRecyclerView.setAdapter(new MyAdapter());
+        mRecyclerView.setAdapter(mAdapter);
+    }
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        mAdapter.Destroy();         //Stop la tâche DownloadTask
     }
 
 }
