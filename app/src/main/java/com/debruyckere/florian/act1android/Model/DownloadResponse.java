@@ -7,5 +7,10 @@ import java.util.List;
  */
 
 public interface DownloadResponse {
+    /**
+     * Permet l'envoi du résultat à l'adapter
+     * @param result
+     * resultat à envoyer
+     */
     void processFinish(List<News> result);
 }

@@ -2,6 +2,7 @@ package com.debruyckere.florian.act1android.Model;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.util.Log;
@@ -37,7 +38,11 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> impl
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         DDL.delegate=this;
-        DDL.execute(URLListing().get(0), URLListing().get(1),URLListing().get(2));
+        //Verifie si la tâche est en cours
+        if(DDL.getStatus() != AsyncTask.Status.RUNNING){
+            DDL.execute(URLListing().get(0), URLListing().get(1),URLListing().get(2));
+        }
+
         Log.i("INFO LANCEMENT","thread DDL lancé");
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.list_cell,parent,false);
@@ -87,6 +92,10 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> impl
             }
         });
     }
+
+    /**
+     * Stop l'asyncTask DownloadTask
+     */
     public void Destroy(){
         DDL.cancel(true);           //Stop la tâche DownloadTask
     }
