@@ -158,11 +158,12 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder>
         public MyViewHolder(final View itemView){
             super(itemView);
             mTitle = itemView.findViewById(R.id.Article_Title);
+            mContext = itemView.getContext();
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(itemView.getContext(),ArticleActivity.class);
+                    Intent intent = new Intent(mContext,ArticleActivity.class);
                     intent.putExtra("ETRA_HTML",mElement.getElementsByTagName("link").item(0).getTextContent());
                     mContext.startActivity(intent);
                 }
