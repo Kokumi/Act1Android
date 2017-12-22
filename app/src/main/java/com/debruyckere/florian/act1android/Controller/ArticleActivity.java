@@ -18,6 +18,7 @@ public class ArticleActivity extends AppCompatActivity {
         mWebView =findViewById(R.id.Article_WebViews);
 
         mHtmlContent = (String)getIntent().getSerializableExtra("ETRA_HTML");
-        mWebView.loadData(mHtmlContent,"Text/html; charset=UTF-8", null);
+        //mWebView.loadData(mHtmlContent,"Text/html; charset=UTF-8", null);
+        mWebView.loadUrl(mHtmlContent);
     }
 }

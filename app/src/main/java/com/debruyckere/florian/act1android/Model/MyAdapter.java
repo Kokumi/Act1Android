@@ -2,58 +2,121 @@ package com.debruyckere.florian.act1android.Model;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.debruyckere.florian.act1android.Controller.ArticleActivity;
 import com.debruyckere.florian.act1android.R;
 import com.oc.rss.fake.FakeNews;
 import com.oc.rss.fake.FakeNewsList;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 /**
  * Created by Debruyckère Florian on 01/12/2017.
- * TODO: demander pour RecyclerView
  */
 
-public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> implements DownloadResponse{
+public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder>
+        implements DownloadResponse, DownloadTask.DocumentConsumer{
 
-    DownloadTask DDL = new DownloadTask();
+    DownloadTask DDL = new DownloadTask(this);
     private List<News> mNewsList;
     private List<FakeNews> mFakeNewsList = FakeNewsList.all;
     private Context mContext;
+    private Document mDocument = null;
+    private DownloadTask.DocumentConsumer mDocumentConsumer;
 
-    @Override
+    /*@Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         DDL.delegate=this;
-        DDL.execute();
+        //Verifie si la tâche est en cours
+        if(DDL.getStatus() != AsyncTask.Status.RUNNING){
+            DDL.execute(URLListing().get(0), URLListing().get(1),URLListing().get(2));
+        }
+
+        Log.i("INFO LANCEMENT","thread DDL lancé");
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.list_cell,parent,false);
 
+        return new MyViewHolder(view);
+    }*/
+
+    @Override
+    public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        View view = inflater.inflate(R.layout.list_cell,parent,false);
         return new MyViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        News mFN = mNewsList.get(position);
-        //FakeNews mFN = mFakeNewsList.get(position);
-        holder.display(mFN);
+        /*try {
+            News mFN = mNewsList.get(position);
+            //FakeNews mFN = mFakeNewsList.get(position);
+            holder.display(mFN);
+        }catch (Exception e){
+            News ErreurNews = new News();
+            ErreurNews.setTitle("Error");
+            Destroy();
+        }*/
+        Element item =(Element)mDocument.getElementsByTagName("item").item(position);
+        holder.setElement(item);
     }
 
     @Override
+    public void setXMLDocument(Document document){
+        Log.i("SETTER","SET DOCUMENT");
+        mDocument = document;
+        notifyDataSetChanged();
+    }
+   /* @Override
     public int getItemCount(){
         return mFakeNewsList.size();
+    }*/
+
+    @Override
+    public int getItemCount() {
+        if(mDocument != null){
+            Log.i("COUNT",""+mDocument.getElementsByTagName("item").getLength());
+            return mDocument.getElementsByTagName("item").getLength();
+        }else{
+            Log.i("COUNT","Document=null");
+            return 0;
+        }
+    }
+
+    private List<URL> URLListing(){
+        List<URL> mURLList = new ArrayList<>();
+        try{
+            mURLList.add(new URL("http://www.lemonde.fr/jeux-video/rss_full.xml"));
+            mURLList.add(new URL("http://www.lemonde.fr/m-actu/rss_full.xml"));
+            mURLList.add(new URL("http://www.lemonde.fr/technologies/rss_full.xml"));
+        }catch (MalformedURLException e){
+            Log.i("BUG","ERREUR DANS LES URLS");
+        }
+
+        return mURLList;
     }
 
     @Override
-    public void processFinish(List<News> result) {
+    public void processFinish(List<News> result) {      //récupération des résultat de DownloadTask
         mNewsList = result;
+        //trie des news selon leur récenteté
         Collections.sort(mNewsList, new Comparator<News>() {
             @Override
             public int compare(News o1, News o2) {
@@ -62,12 +125,21 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> impl
         });
     }
 
+    /**
+     * Stop l'asyncTask DownloadTask
+     */
+    public void Destroy(){
+        DDL.cancel(true);           //Stop la tâche DownloadTask
+    }
+
+
     public class MyViewHolder extends RecyclerView.ViewHolder{
         private TextView mTitle;
         //private FakeNews mFakeNews;
         private News mNews;
+        private Element mElement;
 
-        public MyViewHolder(final View itemView) {
+        /*public MyViewHolder(final View itemView) {
             super(itemView);
             mContext= itemView.getContext();
 
@@ -82,7 +154,23 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> impl
                     mContext.startActivity(intent);
                 }
             });
+        }*/
+        public MyViewHolder(final View itemView){
+            super(itemView);
+            mTitle = itemView.findViewById(R.id.Article_Title);
+            mContext = itemView.getContext();
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(mContext,ArticleActivity.class);
+                    intent.putExtra("ETRA_HTML",mElement.getElementsByTagName("link").item(0).getTextContent());
+                    mContext.startActivity(intent);
+                }
+            });
         }
+
+
         /*public void display(FakeNews mFN){
             mFakeNews = mFN;
             mTitle.setText(mFN.title);
@@ -90,6 +178,11 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> impl
         public void display(News mN){
             mNews = mN;
             mTitle.setText(mN.getTitle());
+        }
+        public void setElement(Element element){
+            Log.i("RECYCLER","affichage des titres");
+            mElement = element;
+            mTitle.setText(element.getElementsByTagName("title").item(0).getTextContent());
         }
     }
 }
