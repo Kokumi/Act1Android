@@ -71,6 +71,7 @@ public class DownloadTask extends AsyncTask<URL, Void, Document> {
     @Override
     protected Document doInBackground(URL... urls){
         Document doc = null;
+
         try{
             for(URL unUrl : urls){
                 Log.i("TASK","Downloading this"+unUrl);
@@ -85,12 +86,14 @@ public class DownloadTask extends AsyncTask<URL, Void, Document> {
                     Log.i("TASK","fin du téléchargement");
                     stream.close();
                 }
+                if(isCancelled())break;
             }
         }catch (Exception ex){
             Log.e("CONNECTION ERROR","erreur durand le Téléchargement", ex);
             throw new RuntimeException(ex);
 
         }
+
         return doc;
     }
 
