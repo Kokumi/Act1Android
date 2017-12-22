@@ -3,12 +3,10 @@ package com.debruyckere.florian.act1android.Controller;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-import com.debruyckere.florian.act1android.Model.DownloadResponse;
+
 import com.debruyckere.florian.act1android.Model.DownloadTask;
 import com.debruyckere.florian.act1android.Model.MyAdapter;
 import com.debruyckere.florian.act1android.R;
-import com.oc.rss.fake.FakeNews;
-import com.oc.rss.fake.FakeNewsList;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -23,7 +21,6 @@ import android.view.MenuItem;
 
 public class MainActivity extends AppCompatActivity{
 
-    private List<FakeNews> mFakeNews= FakeNewsList.all;
     private RecyclerView mRecyclerView;
     private MyAdapter mAdapter = new MyAdapter();
     List<URL> mURLList = new ArrayList<>();
@@ -38,6 +35,7 @@ public class MainActivity extends AppCompatActivity{
         mRecyclerView=findViewById(R.id.ListViews);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setAdapter(mAdapter);
+
 
         try{
             mURLList.add(new URL("http://www.lemonde.fr/jeux-video/rss_full.xml"));
