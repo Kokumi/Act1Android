@@ -17,6 +17,9 @@ import com.debruyckere.florian.act1android.R;
 import com.oc.rss.fake.FakeNews;
 import com.oc.rss.fake.FakeNewsList;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -28,14 +31,17 @@ import java.util.List;
  * Created by Debruyckère Florian on 01/12/2017.
  */
 
-public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> implements DownloadResponse{
+public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder>
+        implements DownloadResponse, DownloadTask.DocumentConsumer{
 
     DownloadTask DDL = new DownloadTask(this);
     private List<News> mNewsList;
     private List<FakeNews> mFakeNewsList = FakeNewsList.all;
     private Context mContext;
+    private Document mDocument = null;
+    private DownloadTask.DocumentConsumer mDocumentConsumer;
 
-    @Override
+    /*@Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         DDL.delegate=this;
         //Verifie si la tâche est en cours
@@ -48,11 +54,18 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> impl
         View view = inflater.inflate(R.layout.list_cell,parent,false);
 
         return new MyViewHolder(view);
+    }*/
+
+    @Override
+    public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        View view = inflater.inflate(R.layout.list_cell,parent,false);
+        return new MyViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        try {
+        /*try {
             News mFN = mNewsList.get(position);
             //FakeNews mFN = mFakeNewsList.get(position);
             holder.display(mFN);
@@ -60,12 +73,31 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> impl
             News ErreurNews = new News();
             ErreurNews.setTitle("Error");
             Destroy();
-        }
+        }*/
+        Element item =(Element)mDocument.getElementsByTagName("item").item(position);
+        holder.setElement(item);
     }
 
     @Override
+    public void setXMLDocument(Document document){
+        Log.i("SETTER","SET DOCUMENT");
+        mDocument = document;
+        notifyDataSetChanged();
+    }
+   /* @Override
     public int getItemCount(){
         return mFakeNewsList.size();
+    }*/
+
+    @Override
+    public int getItemCount() {
+        if(mDocument != null){
+            Log.i("COUNT",""+mDocument.getElementsByTagName("item").getLength());
+            return mDocument.getElementsByTagName("item").getLength();
+        }else{
+            Log.i("COUNT","Document=null");
+            return 0;
+        }
     }
 
     private List<URL> URLListing(){
@@ -100,12 +132,14 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> impl
         DDL.cancel(true);           //Stop la tâche DownloadTask
     }
 
+
     public class MyViewHolder extends RecyclerView.ViewHolder{
         private TextView mTitle;
         //private FakeNews mFakeNews;
         private News mNews;
+        private Element mElement;
 
-        public MyViewHolder(final View itemView) {
+        /*public MyViewHolder(final View itemView) {
             super(itemView);
             mContext= itemView.getContext();
 
@@ -120,7 +154,22 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> impl
                     mContext.startActivity(intent);
                 }
             });
+        }*/
+        public MyViewHolder(final View itemView){
+            super(itemView);
+            mTitle = itemView.findViewById(R.id.Article_Title);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(itemView.getContext(),ArticleActivity.class);
+                    intent.putExtra("ETRA_HTML",mElement.getElementsByTagName("link").item(0).getTextContent());
+                    mContext.startActivity(intent);
+                }
+            });
         }
+
+
         /*public void display(FakeNews mFN){
             mFakeNews = mFN;
             mTitle.setText(mFN.title);
@@ -128,6 +177,11 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> impl
         public void display(News mN){
             mNews = mN;
             mTitle.setText(mN.getTitle());
+        }
+        public void setElement(Element element){
+            Log.i("RECYCLER","affichage des titres");
+            mElement = element;
+            mTitle.setText(element.getElementsByTagName("title").item(0).getTextContent());
         }
     }
 }

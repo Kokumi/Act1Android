@@ -28,22 +28,29 @@ import javax.xml.parsers.DocumentBuilderFactory;
  * Created by Debruyckère Florian on 12/12/2017.
  */
 
-public class DownloadTask extends AsyncTask<URL, Void, List<News>> {
+public class DownloadTask extends AsyncTask<URL, Void, Document> {
     public DownloadResponse delegate =null;
 
     private URL mURL;
     private MyAdapter mAdapter;
 
+    interface DocumentConsumer{
+        void setXMLDocument(Document mDocument);
+    }
+    private DocumentConsumer docConsumer ;
+
+    public DownloadTask(DocumentConsumer consumer){docConsumer = consumer;}
+
     /**
      * constructeur pour reprendre l'adapter
-     * @param pAda
+     //* @param pAda
      *          MyAdapter déclarant cette class
      */
-    public DownloadTask(MyAdapter pAda){
+    /*public DownloadTask(MyAdapter pAda){
         this.mAdapter = pAda;
-    }
-    @Override
-    protected List<News> doInBackground(URL... urls) {
+    }*/
+    //@Override
+    /*protected List<News> doInBackground(URL... urls) {
 
         List<News> lNews = new ArrayList<>();
         for(URL unUrl : urls){
@@ -60,12 +67,43 @@ public class DownloadTask extends AsyncTask<URL, Void, List<News>> {
         }
 
         return lNews;
+    }*/
+    @Override
+    protected Document doInBackground(URL... urls){
+        Document doc = null;
+        try{
+            for(URL unUrl : urls){
+                Log.i("TASK","Downloading this"+unUrl);
+                InputStream stream = unUrl.openConnection().getInputStream();
+                try{
+                    Log.i("TASK","Retour doc");
+                    doc= DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
+                }
+                catch (Exception ex){
+                    Log.e("TASK","Erreur Download"+ex);
+                }finally {
+                    Log.i("TASK","fin du téléchargement");
+                    stream.close();
+                }
+            }
+        }catch (Exception ex){
+            Log.e("CONNECTION ERROR","erreur durand le Téléchargement", ex);
+            throw new RuntimeException(ex);
+
+        }
+        return doc;
     }
 
-    @Override
+    /*@Override
     protected void onPostExecute(List<News> pNews){
         Log.i("POST","Process finish called");
         mAdapter.processFinish(pNews);
+    }*/
+
+    @Override
+    protected void onPostExecute(Document document) {
+        Log.i("TASK","Post execute");
+        docConsumer.setXMLDocument(document);
     }
 
     /**
